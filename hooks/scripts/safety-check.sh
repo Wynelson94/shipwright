@@ -11,32 +11,44 @@ TOOL_NAME=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin);
 if [ "$TOOL_NAME" = "Bash" ]; then
     COMMAND=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null || echo "")
 
-    # Block destructive patterns
-    BLOCKED_PATTERNS=(
-        'rm -rf /'
-        'rm -rf ~'
-        'rm -rf \$HOME'
-        'sudo rm'
-        'sudo chmod'
-        'sudo chown'
-        'mkfs'
-        'dd if=/dev/zero'
-        'dd if=/dev/random'
-        'chmod -R 777 /'
-        'curl.*| *bash'
-        'curl.*| *sh'
-        'wget.*| *bash'
-        'wget.*| *sh'
-        'eval \$('
-        'base64 -d |'
-    )
+    # Allow commands targeting Shipwright plugin data directory (build memory, audit logs)
+    if echo "$COMMAND" | grep -q '\.claude/plugins/data/shipwright\|\.shipwright'; then
+        exit 0
+    fi
 
-    for pattern in "${BLOCKED_PATTERNS[@]}"; do
-        if echo "$COMMAND" | grep -qiE "$pattern"; then
-            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"BLOCKED by Shipwright: Dangerous command detected"}}'
-            exit 2
-        fi
-    done
+    # Block destructive patterns using python for precise matching (avoids grep regex issues)
+    BLOCKED=$(echo "$COMMAND" | python3 -c "
+import sys, re
+cmd = sys.stdin.read()
+patterns = [
+    r'rm\s+-rf\s+/(\s|$|;|\*)',
+    r'rm\s+-rf\s+~(\s|$|;|\*)',
+    r'rm\s+-rf\s+\\\$HOME',
+    r'sudo\s+rm\b',
+    r'sudo\s+chmod\b',
+    r'sudo\s+chown\b',
+    r'\bmkfs\b',
+    r'dd\s+if=/dev/zero',
+    r'dd\s+if=/dev/random',
+    r'chmod\s+-R\s+777\s+/',
+    r'curl\s+.*\|\s*bash',
+    r'curl\s+.*\|\s*sh\b',
+    r'wget\s+.*\|\s*bash',
+    r'wget\s+.*\|\s*sh\b',
+    r'eval\s+\\\$\(',
+    r'base64\s+-d\s*\|',
+]
+for p in patterns:
+    if re.search(p, cmd, re.IGNORECASE):
+        print('BLOCKED')
+        sys.exit(0)
+print('OK')
+" 2>/dev/null || echo "OK")
+
+    if [ "$BLOCKED" = "BLOCKED" ]; then
+        echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"BLOCKED by Shipwright: Dangerous command detected"}}'
+        exit 2
+    fi
 fi
 
 if [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "Edit" ]; then

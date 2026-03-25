@@ -204,13 +204,16 @@ Write a `SPEC_AUDIT.md` with results.
 
 ---
 
-## Phase 8: Deploy to Vercel
+## Phase 8: Deploy to Vercel (Preview First)
 
-Deploy the application:
+Deploy a **preview** so the user can check it before going public:
 
-1. Run `vercel` to create a preview deployment
+1. Run `vercel` (without `--prod`) to create a preview deployment
 2. Verify the deployment succeeded
-3. If it's good, run `vercel --prod` for the production URL
+3. Give the user the preview URL
+4. **Do NOT run `vercel --prod` automatically** — wait for the user to ask
+
+The preview lets them review before going live. If the user says "push to production", "make it public", "go live", or similar — then run `vercel --prod` and give them the production URL.
 
 ### If deployment fails:
 - Check for missing environment variables
@@ -219,8 +222,8 @@ Deploy the application:
 - Fix and retry
 
 Tell the user:
-> "Deploying to Vercel..."
-> "Your app is live! Here's your URL: [URL]"
+> "Deploying a preview to Vercel..."
+> "Preview is ready! Here's your link: [URL] — only you can see this for now."
 
 ---
 
@@ -239,9 +242,9 @@ After deployment, verify key functionality works:
 
 When everything is done, give the user a clear summary:
 
-> "Your app is built and deployed!
+> "Your app is built and ready!
 >
-> **[App Name]** is live at: **[URL]**
+> **[App Name]** — preview is live at: **[URL]**
 >
 > What I built:
 > - [feature 1]
@@ -251,12 +254,13 @@ When everything is done, give the user a clear summary:
 > Tests: [X] passed
 > Quality: [score description]
 >
-> The code is in [project directory]. You can:
-> - Make changes and redeploy with `vercel --prod`
-> - Use `/shipwright:enhance` to add new features
-> - Share the URL with anyone — it's live!
+> The code is in [project directory].
 >
-> Want me to change anything?"
+> **This is a preview deployment** — only you can see it right now. Take a look and when you're happy with it, say **"push to production"** and I'll make it public with a clean URL anyone can visit.
+>
+> You can also:
+> - Tell me to change anything (colors, layout, content)
+> - Use `/shipwright:enhance` to add new features later"
 
 ---
 

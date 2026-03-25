@@ -20,6 +20,40 @@ Take a plain English idea and deliver a **deployed, working application** with a
 
 ---
 
+## Pre-Build: Check Build Memory
+
+Before starting, check if there are lessons from past builds that apply to this idea.
+
+1. Read `${CLAUDE_PLUGIN_DATA}/lessons.jsonl` (if it exists)
+2. Look for entries with similar keywords to the current idea
+3. If you find relevant lessons, factor them into your approach — don't repeat past mistakes
+
+If the file doesn't exist, skip this step silently.
+
+---
+
+## Token Budget Awareness
+
+Be cost-conscious with the user's Claude subscription. Budget your turns:
+
+| App Complexity | Target Turns | Examples |
+|---------------|-------------|----------|
+| Simple (content site, portfolio, blog) | < 30 turns | Static pages, no database, no auth |
+| Medium (basic SaaS, dashboard) | < 50 turns | 3-5 pages, simple database, basic auth |
+| Complex (marketplace, multi-tenant) | < 80 turns | Many pages, complex data, roles, payments |
+
+**Hard limit: 100 turns** (enforced by Claude Code). If you're approaching 80 turns:
+- Skip optional phases (enrichment, detailed verification)
+- Deploy what's built even if not perfect
+- Tell the user: "I've used most of the build budget. Deploying what we have — you can use `/shipwright:enhance` to add more later."
+
+**Never** spend turns on:
+- Excessive refactoring after the code works
+- Rewriting files that already pass tests
+- Adding features the user didn't ask for
+
+---
+
 ## Phase 0: Preflight Check
 
 Before building anything, verify the user's environment is ready. Check silently and only ask for help if something is missing.
@@ -223,6 +257,21 @@ When everything is done, give the user a clear summary:
 > - Share the URL with anyone — it's live!
 >
 > Want me to change anything?"
+
+---
+
+## Post-Build: Record Lessons
+
+After the build completes (success or failure), record what you learned:
+
+1. Create or append to `${CLAUDE_PLUGIN_DATA}/lessons.jsonl`
+2. Write a single JSON line with:
+   ```json
+   {"timestamp": "ISO-8601", "idea_keywords": ["keyword1", "keyword2"], "stack": "stack-id", "outcome": "success|failure", "lesson": "what went wrong or what worked well", "fix": "what fixed it (if applicable)"}
+   ```
+3. Keep lessons concise — one line per build, focused on what's useful for future builds
+
+This builds up a knowledge base that makes every future build smarter.
 
 ---
 

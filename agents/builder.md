@@ -169,6 +169,87 @@ After deployment:
 2. Verify key pages exist
 3. Note any issues
 
+## Error Recovery Patterns
+
+When you encounter errors during build or deploy, use these specific recovery strategies (ported from Product Agent v12's battle-tested error database):
+
+### Module/Import Errors
+**Pattern:** `Module not found: Can't resolve 'X'` or `Cannot find module 'X'`
+**Fix:**
+1. If the import starts with `@/` — check `tsconfig.json` has `"@/*": ["./src/*"]` path alias
+2. Otherwise — run `npm install [package-name]`
+3. If it's a type definition — run `npm install -D @types/[package-name]`
+
+### TypeScript Type Errors
+**Pattern:** `Type 'X' is not assignable to type 'Y'` or `Property 'X' does not exist on type 'Y'`
+**Fix:**
+1. Check the type definitions for the involved types
+2. Add proper type annotations or type guards
+3. For external data, add proper type assertions with `as` or `satisfies`
+
+### SQLite on Vercel (CRITICAL — Common Fatal Error)
+**Pattern:** `SQLITE_CANTOPEN`, `unable to open database`, `no such table`, `better-sqlite3`
+**Root cause:** SQLite stores data in a local file. Vercel is serverless — files don't persist between requests.
+**Fix:**
+1. Change Prisma schema: `provider = "postgresql"` (not `"sqlite"`)
+2. Change `url = "file:./dev.db"` to `url = env("DATABASE_URL")`
+3. Use Supabase or Neon for the database
+4. Run `npx prisma db push` after switching
+
+### Prisma Migration Errors
+**Pattern:** `relation "X" does not exist`, `migration failed`
+**Fix:**
+1. Run `npx prisma db push` (development) or `npx prisma migrate deploy` (production)
+2. If tables exist but schema changed — `npx prisma db push --force-reset` (WARNING: drops data)
+3. Check that `DATABASE_URL` is set correctly
+
+### RLS Circular Dependency (Supabase)
+**Pattern:** `new row violates row-level security policy`, `query returned no rows`, `permission denied.*rls`
+**Root cause:** A table's RLS policy subqueries itself (e.g., profiles table policy looks up user's org_id from the same profiles table).
+**Fix:**
+1. Create a SECURITY DEFINER function that bypasses RLS:
+   ```sql
+   CREATE OR REPLACE FUNCTION get_user_org_id()
+   RETURNS uuid AS $$
+     SELECT org_id FROM profiles WHERE user_id = auth.uid()
+   $$ LANGUAGE sql SECURITY DEFINER;
+   ```
+2. Update the RLS policy to use the function instead of a subquery
+3. For admin access, use the Supabase service role client
+
+### Missing Environment Variables
+**Pattern:** `Environment variable X is missing`
+**Fix:** Guide the user in plain English:
+> "Your app needs a setting called [VAR_NAME] to work. Here's how to add it:
+> 1. Run `vercel env add [VAR_NAME]` in your terminal
+> 2. Paste the value when prompted
+> 3. Then run `vercel --prod` again to redeploy"
+
+### Vercel Deployment Failures
+**Pattern:** `Error: Command failed: vercel`, `Deployment failed`
+**Fix:**
+1. Check `vercel whoami` — may need to re-login
+2. Check build output for specific errors
+3. Verify `package.json` has correct build script
+4. Check for large files that exceed Vercel limits (use `.vercelignore`)
+
+### React/Next.js Component Errors
+**Pattern:** `'X' cannot be used as a JSX component`, `not a valid React element`
+**Fix:**
+1. Ensure component is a valid function returning JSX
+2. Check for missing `'use client'` directive if using hooks/state
+3. Verify all imports are correct
+
+### General Recovery Strategy
+If you hit an error not in the list above:
+1. Read the FULL error message — the fix is usually in the details
+2. Identify the file and line number
+3. Make the MINIMAL fix needed — don't rewrite working code
+4. Run `npm run build` to verify the fix
+5. If stuck after 3 attempts on the same error, skip to deploy and note it in the summary
+
+---
+
 ## Quality Scoring
 
 Score the build on 100 points:

@@ -246,21 +246,35 @@ When everything is done, give the user a clear summary:
 >
 > **[App Name]** — preview is live at: **[URL]**
 >
-> What I built:
+> ---
+>
+> **What I built:**
 > - [feature 1]
 > - [feature 2]
 > - [feature 3]
 >
-> Tests: [X] passed
-> Quality: [score description]
+> **Build stats:**
+> - Stack: [stack name in plain English]
+> - Code: [project directory]
+> - Build time: [duration]
 >
-> The code is in [project directory].
+> ---
 >
-> **This is a preview deployment** — only you can see it right now. Take a look and when you're happy with it, say **"push to production"** and I'll make it public with a clean URL anyone can visit.
+> **What happens next — this is your app, here's what you can do:**
 >
-> You can also:
-> - Tell me to change anything (colors, layout, content)
-> - Use `/shipwright:enhance` to add new features later"
+> **Right now in this chat:**
+> - Tell me to change anything — "make the background darker", "add a contact form", "change the headline" — I'll update it live
+> - Say **"push to production"** to make it public with a clean URL anyone can visit
+> - Ask me questions — "how do I add a new page?" "where do I edit the hero section?" — I'll walk you through it
+>
+> **Later:**
+> - Come back anytime and use `/shipwright:enhance` to add new features
+> - The code is yours — it's in [project directory] and on your machine
+> - To redeploy after manual changes: just run `vercel --prod` in that folder
+>
+> **This is a preview** — only you can see it right now. Take a look, tell me what you think, and when you're happy I'll push it live."
+
+This final report is **critical** — it's the last thing the user sees. Make it clear, confident, and empowering. The user should walk away knowing exactly what they can do next. Never end with just "want me to change anything?" — always give them the full menu of options.
 
 ---
 

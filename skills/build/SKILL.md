@@ -33,9 +33,9 @@ Before building anything, verify the user's environment is ready. Check silently
 ### Product Agent engine (CRITICAL):
 5. Check if `product-agent` CLI is available: run `product-agent --help 2>/dev/null || echo "NOT INSTALLED"`
 6. If NOT INSTALLED:
-   - Check if the source exists at `~/Projects/product-agent/`
-   - If yes: run `pip install -e ~/Projects/product-agent/`
-   - If no: tell the user "Shipwright needs its build engine installed. Run: `pip install product-agent`"
+   - Run `pip install product-agent`
+   - If that fails (not yet on PyPI), check if the source exists at `~/Projects/product-agent/` and run `pip install -e ~/Projects/product-agent/`
+   - If neither works: tell the user "Shipwright needs its build engine installed. Run: `pip install product-agent`"
 7. Verify it works: `product-agent --help`
 
 ### For deployment:

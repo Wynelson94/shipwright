@@ -4,3 +4,9 @@
 .env*.local
 node_modules/
 .DS_Store
+.claude/
+.vercel/
+.shipwright/
+*.log
+.build-output.txt
+.build-progress.log

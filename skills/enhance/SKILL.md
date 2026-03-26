@@ -41,20 +41,39 @@ Wait for confirmation.
 
 ## Step 3: Run Product Agent Enhancement Mode
 
+**IMPORTANT: Background execution required.** Enhancements can take 10-30 minutes. Run in the background and poll for progress.
+
+### 3a: Start the enhancement
+
 ```bash
-product-agent "$FEATURE_REQUEST" \
+nohup product-agent "$FEATURE_REQUEST" \
   --project-dir $PROJECT_DIR \
   --design-file $PROJECT_DIR/DESIGN.md \
   --enhance-features "$FEATURES_COMMA_SEPARATED" \
   --json-output \
   --progress-mode friendly \
-  2>&1
+  > $PROJECT_DIR/.build-output.txt \
+  2> $PROJECT_DIR/.build-progress.log &
+echo "PID=$!"
 ```
 
-This runs the enhancement pipeline: Enhance → Review → Build → Audit → Test → Deploy → Verify — with all the same enforced retries and validation as a fresh build.
+Save the PID. Tell the user:
+> "Adding your features now — this will take 10-20 minutes. I'll keep you posted on progress."
 
-Tell the user:
-> "Adding your features now — this will take a few minutes..."
+### 3b: Poll for progress
+
+Every 60-90 seconds, check:
+
+```bash
+kill -0 $PID 2>/dev/null && echo "RUNNING" || echo "DONE"
+```
+```bash
+tail -5 $PROJECT_DIR/.build-progress.log 2>/dev/null
+```
+
+Report progress to the user in plain English. Keep polling until done.
+
+This runs the enhancement pipeline: Enhance → Review → Build → Audit → Test → Deploy → Verify — with all the same enforced retries and validation as a fresh build.
 
 ### If Product Agent is NOT installed (fallback):
 
@@ -67,7 +86,11 @@ Do the enhancement manually:
 
 ## Step 4: Parse Result and Report
 
-Same as the build skill — parse the JSON output and translate into a beginner-friendly report:
+When the process finishes, read the output: `cat $PROJECT_DIR/.build-output.txt`
+
+**If NOT valid JSON**: Check `$PROJECT_DIR/.build-progress.log` for error details. Translate to plain English. Common failures: auth expired, timeout, unexpected crash.
+
+**If valid JSON**: Parse and translate into a beginner-friendly report:
 
 > "Your app has been updated!
 >

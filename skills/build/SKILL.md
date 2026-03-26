@@ -69,17 +69,47 @@ Wait for the user to confirm before proceeding.
 
 ## Step 3: Run Product Agent
 
-This is where the real engine takes over. Generate a project name from the idea (lowercase, hyphenated), then run:
+This is where the real engine takes over. Generate a project name from the idea (lowercase, hyphenated).
+
+**IMPORTANT: Background execution required.** The build takes 15-45 minutes — far longer than a single Bash timeout allows. You MUST run it in the background and poll for progress.
+
+### 3a: Create the project directory and start the build
 
 ```bash
-product-agent "$IDEA" \
+mkdir -p ~/Projects/$PROJECT_NAME
+nohup product-agent "$IDEA" \
   --project-dir ~/Projects/$PROJECT_NAME \
   --json-output \
   --progress-mode friendly \
-  2>&1
+  > ~/Projects/$PROJECT_NAME/.build-output.txt \
+  2> ~/Projects/$PROJECT_NAME/.build-progress.log &
+echo "PID=$!"
 ```
 
-**IMPORTANT:** This command runs the full 9-phase pipeline with REAL enforcement:
+Save the PID from the output. Tell the user:
+> "Building your app now — this takes 15-30 minutes depending on complexity. I'll check in regularly and show you progress."
+
+### 3b: Poll for progress
+
+Every 60-90 seconds, check two things:
+
+**Is it still running?**
+```bash
+kill -0 $PID 2>/dev/null && echo "RUNNING" || echo "DONE"
+```
+
+**What's the latest progress?**
+```bash
+tail -5 ~/Projects/$PROJECT_NAME/.build-progress.log 2>/dev/null
+```
+
+Report the latest progress line to the user in plain English. The progress log contains friendly messages like "Writing the code (this takes a few minutes)..." — relay these to the user.
+
+Keep polling until the process finishes (status = DONE).
+
+### 3c: What the pipeline does (for context)
+
+The `product-agent` command runs a full 9-phase pipeline with REAL enforcement:
 - Stack selection via scored algorithm (not guessing)
 - Design with enforced 2-revision max
 - Build with enforced 5-attempt max and error injection
@@ -87,11 +117,6 @@ product-agent "$IDEA" \
 - Validation between every phase
 - Quality scoring with hard caps
 - Build memory from past failures
-
-The command will take several minutes. While it runs, the `--progress-mode friendly` flag will output beginner-readable progress to stderr.
-
-Tell the user:
-> "Building your app now — this will take a few minutes. You'll see progress updates as each step completes."
 
 ### If Product Agent is NOT installed (fallback):
 
@@ -105,7 +130,13 @@ If you couldn't install Product Agent in Step 1, fall back to manual mode:
 
 ## Step 4: Parse the Result
 
-Product Agent outputs JSON to stdout when using `--json-output`. Parse it:
+When the build process finishes, read the output file:
+
+```bash
+cat ~/Projects/$PROJECT_NAME/.build-output.txt
+```
+
+**If the output is valid JSON**, parse it:
 
 ```json
 {
@@ -121,6 +152,16 @@ Product Agent outputs JSON to stdout when using `--json-output`. Parse it:
 ```
 
 If `success` is `false`, read `reason` and explain it to the user in plain English. Don't show the raw JSON.
+
+**If the output is NOT valid JSON** (crash, out-of-memory, unexpected error):
+1. Check the progress log: `cat ~/Projects/$PROJECT_NAME/.build-progress.log`
+2. Look for the last phase that completed and what went wrong
+3. Translate any Python traceback or error into plain English for the user
+4. Common failures and what to tell the user:
+   - "Claude Code is not logged in" → "You need to log into Claude Code first. Run: `claude login`"
+   - "Timed out" → "The build took too long. Let's try with a simpler version of the app."
+   - Python traceback → "The build engine hit an unexpected error. Let me try running it again."
+   - Empty output → "The build didn't produce results. Let me check what happened and try again."
 
 ---
 

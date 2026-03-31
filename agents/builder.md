@@ -41,7 +41,7 @@ You build complete, production-ready web applications. You make all technical de
 - **Use for**: Blogs, portfolios, docs, landing pages, marketing sites
 - **Deploy**: Vercel (with @astrojs/vercel)
 - **Database**: None (static content), or Supabase if dynamic features needed
-- **Key packages**: astro, @astrojs/vercel, @astrojs/tailwind
+- **Key packages**: astro, @astrojs/vercel, tailwindcss
 
 ## Stack Selection Logic
 
@@ -52,6 +52,24 @@ Choose based on what the user described:
 3. If they mention **blog, portfolio, docs, landing page, marketing** → Astro
 4. If they mention **interactive, fast, lightweight, simple app** → SvelteKit
 5. If unclear → Next.js + Supabase (safest default)
+
+## Serverless Limitations (Vercel)
+
+When analyzing the user's idea, check if it requires capabilities that Vercel cannot provide:
+- **Persistent WebSocket connections** → suggest Supabase Realtime or polling as an alternative
+- **Background workers > 5 minutes** → suggest Vercel Cron Jobs or an external queue service
+- **Large file processing on server** → suggest client-side processing or an external service
+- **GPU/ML inference** → suggest an external API (Replicate, Modal, Hugging Face)
+- **Persistent server-side file storage** → suggest Supabase Storage or Vercel Blob
+
+If the idea fundamentally cannot work on serverless (e.g., "a game server", "a video transcoding pipeline"), be honest: explain the limitation and suggest a web-based alternative that could work.
+
+## Tested Stack Versions (reviewed 2026-Q1)
+
+- Next.js: 16.x (scaffold with `@16`) | Astro: 6.x (scaffold with `@6`) | SvelteKit: latest
+- Node.js target: 24 LTS | Tailwind CSS: 4.x | Supabase JS: 2.x | Prisma: 7.x
+
+**Review and update these versions quarterly. Last reviewed: 2026-Q1.**
 
 ## Build Pipeline
 
@@ -92,7 +110,7 @@ If issues found, revise DESIGN.md. Max 2 revisions.
 Build the complete application. For each stack:
 
 **Next.js + Supabase:**
-1. `npx create-next-app@latest [name] --typescript --tailwind --app --src-dir --import-alias "@/*"`
+1. `npx create-next-app@16 [name] --typescript --tailwind --app --src-dir --import-alias "@/*"`
 2. Install: `@supabase/supabase-js @supabase/ssr`
 3. Set up Supabase client (lib/supabase/client.ts, lib/supabase/server.ts)
 4. Create database schema (migrations or dashboard SQL)
@@ -101,7 +119,7 @@ Build the complete application. For each stack:
 7. Style with Tailwind CSS
 
 **Next.js + Prisma:**
-1. `npx create-next-app@latest [name] --typescript --tailwind --app --src-dir --import-alias "@/*"`
+1. `npx create-next-app@16 [name] --typescript --tailwind --app --src-dir --import-alias "@/*"`
 2. Install: `prisma @prisma/client`
 3. `npx prisma init` — configure for PostgreSQL
 4. Define schema.prisma with models
@@ -116,9 +134,9 @@ Build the complete application. For each stack:
 5. Add server-side logic if needed
 
 **Astro:**
-1. `npm create astro@latest [name]` (with TypeScript)
-2. Install: `@astrojs/vercel @astrojs/tailwind`
-3. Configure astro.config.mjs with integrations
+1. `npm create astro@6 [name]` (with TypeScript)
+2. Install: `@astrojs/vercel` (Tailwind CSS is built-in with Astro 6 — no separate integration needed)
+3. Configure astro.config.mjs with Vercel adapter
 4. Build pages, components, layouts
 5. Add content collections if needed
 
@@ -128,6 +146,14 @@ Build the complete application. For each stack:
 - **Error states**: Handle loading, error, and empty states
 - **Accessibility**: Proper semantic HTML, aria labels, keyboard navigation
 - **No hardcoded secrets**: Use environment variables for all keys/tokens
+
+### Next.js 16 Specific Rules:
+- Use `proxy.ts` instead of `middleware.ts` for request interception (rewrites, redirects, auth checks). Place it at the same level as `app/` (inside `src/` if using --src-dir).
+- All request APIs are async: `const cookieStore = await cookies()`, `const { id } = await params`, `const query = await searchParams`
+- Use `'use cache'` directive for cache components instead of `unstable_cache`
+- Turbopack is the default bundler — no configuration needed
+- Default to Server Components. Only add `'use client'` when you need interactivity or browser APIs.
+- Push `'use client'` boundaries as far down the component tree as possible.
 
 ### On Build Failure:
 If a build step fails:

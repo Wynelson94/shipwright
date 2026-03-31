@@ -31,18 +31,25 @@ Before building anything, verify the user's environment is ready. Check silently
 4. **Python 3.10+** — run `python3 --version`. If missing: "We need Python for the build engine. Run: `brew install python3`"
 
 ### Product Agent engine (CRITICAL):
-5. Check if `product-agent` CLI is available: run `product-agent --help 2>/dev/null || echo "NOT INSTALLED"`
-6. If NOT INSTALLED:
-   - Run `pip install product-agent`
-   - If that fails (not yet on PyPI), check if the source exists at `~/Projects/product-agent/` and run `pip install -e ~/Projects/product-agent/`
-   - If neither works: tell the user "Shipwright needs its build engine installed. Run: `pip install product-agent`"
-7. Verify it works: `product-agent --help`
+5. Run the setup script: `bash "${CLAUDE_PLUGIN_ROOT}/setup.sh"`
+6. If setup.sh exits with an error:
+   - Read its output — it contains specific installation instructions for the user
+   - Relay those instructions to the user in plain English
+   - Do NOT proceed with the build until product-agent is installed
+7. Verify version compatibility: run `product-agent --version` and confirm the major version is 12 or higher
+   - If version is too old: "Your build engine needs updating. Run: `pip install --upgrade product-agent`"
 
 ### For deployment:
 8. **Vercel CLI** — run `vercel --version`. If missing: "To deploy your app live, we need Vercel. Run: `npm install -g vercel` then `vercel login`"
 9. **Vercel login** — run `vercel whoami`. If it fails: "You need to log into Vercel (it's free). Run: `vercel login` and follow the prompts."
 
 If everything checks out, proceed silently. Don't overwhelm the user with "everything is good!" messages for each check.
+
+### First-run guidance:
+Check if the project registry exists: `test -f "${CLAUDE_PLUGIN_DATA:-$HOME/.shipwright}/projects.jsonl" && echo "exists" || echo "first_run"`
+
+If this is the user's first build (registry doesn't exist or is empty), include this tip after the preflight:
+> "Quick tip: During the build, Claude Code may ask for permission to run build tools and create files. When prompted, allow permissions for `npm`, `npx`, `vercel`, and writing to your Projects folder. You can also add these to your allowed permissions in Claude Code settings to skip the prompts next time."
 
 ---
 
@@ -195,6 +202,7 @@ Translate the BuildResult into a clear, empowering summary:
 > - Quality: [quality score, e.g. "A- (92%) — everything works and tests pass"]
 > - Tests: [test_count, e.g. "14 of 14 passed"]
 > - Build time: [duration in human terms, e.g. "about 7 minutes"]
+> - Built with: [framework versions, e.g. "Next.js 16.2.1, Node 24.x"] (run `node --version` and check `package.json` for framework version)
 > - Code: [project directory]
 >
 > ---
@@ -231,9 +239,29 @@ This final report is **critical** — it's the last thing the user sees. Make it
 
 ---
 
+## Post-Build: Register Project
+
+After the build completes (success or failure), register it in the project registry:
+
+1. Create or append to `${CLAUDE_PLUGIN_DATA}/projects.jsonl`
+2. Write a single JSON line:
+   ```bash
+   REGISTRY="${CLAUDE_PLUGIN_DATA:-$HOME/.shipwright}/projects.jsonl"
+   mkdir -p "$(dirname "$REGISTRY")"
+   echo '{"project_id":"PROJECT_NAME","project_dir":"FULL_PATH","idea":"ORIGINAL_IDEA","stack":"STACK_ID","deploy_target":"vercel","deployment_url":"URL_OR_EMPTY","quality_score":SCORE,"created_at":"ISO-8601","last_modified":"ISO-8601","status":"deployed|failed|preview"}' >> "$REGISTRY"
+   ```
+3. Fill in values from the build result:
+   - `project_id`: directory name (e.g., "todo-app")
+   - `project_dir`: full path (e.g., "/Users/nate/Projects/todo-app")
+   - `idea`: the user's original description ($ARGUMENTS)
+   - `stack`: one of `nextjs-supabase`, `nextjs-prisma`, `sveltekit`, `astro`
+   - `deployment_url`: the Vercel URL if deployed, empty string if not
+   - `quality_score`: numeric score (0-100)
+   - `status`: `deployed` if live, `preview` if preview only, `failed` if build failed
+
 ## Post-Build: Record Lessons
 
-After the build completes (success or failure), record what you learned:
+After registering the project, also record what you learned:
 
 1. Create or append to `${CLAUDE_PLUGIN_DATA}/lessons.jsonl`
 2. Write a single JSON line with:

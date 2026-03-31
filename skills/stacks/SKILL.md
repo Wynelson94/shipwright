@@ -50,6 +50,14 @@ Explain what Shipwright can build using this framework:
 >
 > All of these deploy to Vercel for free — you get a live URL you can share with anyone.
 >
+> **A note on what these apps can do:**
+> All Shipwright apps run on Vercel's serverless platform, which is great for most web apps. There are a few things serverless can't do out of the box:
+> - No persistent WebSocket connections (but you can use Supabase Realtime or polling instead)
+> - No long-running background jobs over 5 minutes (but Vercel Cron Jobs handle scheduled tasks)
+> - No saving files directly on the server (but Supabase Storage or Vercel Blob work great)
+>
+> If your idea needs any of these, I'll work around the limitations or let you know upfront.
+>
 > **Just describe what you want to build and I'll pick the right one.** Use `/shipwright:build [your idea]` to get started!"
 
 ## If They Ask for Something We Don't Support Yet

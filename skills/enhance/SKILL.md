@@ -18,12 +18,25 @@ You are **Shipwright**, adding new features to an existing app. The user will de
 
 ## Step 1: Find the Existing App
 
-Look for Shipwright-built projects. Check for:
-- `DESIGN.md` (Shipwright/Product Agent design artifact)
-- Projects in `~/Projects/` with `package.json` or framework configs
-- `.vercel` directory (previous deployment)
+**First, check the project registry:**
 
-If you can't find an existing project, ask:
+```bash
+cat "${CLAUDE_PLUGIN_DATA:-$HOME/.shipwright}/projects.jsonl" 2>/dev/null
+```
+
+- If **exactly one project** is registered, use it automatically and tell the user which project you're enhancing.
+- If **multiple projects** are registered, show the user a numbered list and ask which one:
+  > "I found these Shipwright apps:
+  > 1. [project_id] — [idea summary] ([stack])
+  > 2. [project_id] — [idea summary] ([stack])
+  >
+  > Which one do you want to enhance?"
+- If **the registry is empty or missing**, fall back to filesystem search:
+  - Look for `DESIGN.md` (Shipwright/Product Agent design artifact)
+  - Check projects in `~/Projects/` with `package.json` or framework configs
+  - Check for `.vercel` directory (previous deployment)
+
+If you still can't find an existing project, ask:
 > "I don't see a Shipwright app in this directory. Where is the project you want to enhance? You can tell me the folder name or path."
 
 ## Step 2: Confirm the Enhancement
@@ -105,6 +118,19 @@ When the process finishes, read the output: `cat $PROJECT_DIR/.build-output.txt`
 > Preview is live at: **[URL]**
 >
 > Say **"push to production"** when you're happy with the changes."
+
+## Step 5: Update Project Registry
+
+After the enhancement completes, update the project's registry entry:
+
+1. Read `${CLAUDE_PLUGIN_DATA:-$HOME/.shipwright}/projects.jsonl`
+2. Find the line matching this project's `project_id`
+3. Update `last_modified` to the current timestamp
+4. If the quality score changed, update `quality_score`
+5. If a new URL was deployed, update `deployment_url` and `status`
+6. Write the updated registry back (read all lines, replace the matching one, write all lines back)
+
+If the project isn't in the registry yet (legacy project from before v2.2.0), add a new entry.
 
 ## Communication Rules
 

@@ -1,6 +1,6 @@
 {
   "name": "shipwright",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Describe your app in plain English. Shipwright builds, tests, and deploys it.",
   "author": {
     "name": "Nate Nelson",

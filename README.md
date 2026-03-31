@@ -38,6 +38,51 @@ That's it. Shipwright will:
 | `/shipwright:build [idea]` | Build and deploy a new app |
 | `/shipwright:enhance [feature]` | Add features to an existing app |
 | `/shipwright:stacks` | See what kinds of apps Shipwright can build |
+| `/shipwright:projects` | List all apps you've built with Shipwright |
+
+## Setup
+
+### Requirements
+
+- [Claude Code](https://claude.ai/code) with an active subscription
+- [Node.js](https://nodejs.org) v20+ (v24 LTS recommended)
+- [Git](https://git-scm.com)
+- [Python 3.10+](https://python.org) (required for safety hooks and build engine)
+- [Vercel CLI](https://vercel.com/cli) (`npm i -g vercel`) + free Vercel account
+- [Supabase](https://supabase.com) account (free, only for apps that need a database)
+
+### Build Engine (Product Agent)
+
+Shipwright uses [Product Agent](https://github.com/Wynelson94/product-agent) as its build engine. To install it automatically:
+
+```bash
+bash setup.sh
+```
+
+Or install manually:
+
+```bash
+pip install product-agent
+```
+
+If the package isn't on PyPI yet, install from source:
+
+```bash
+git clone https://github.com/Wynelson94/product-agent.git ~/Projects/product-agent
+pip install -e ~/Projects/product-agent
+```
+
+Minimum required version: **v12.0**
+
+Shipwright checks for all requirements before building and walks you through installing anything that's missing.
+
+### Permissions
+
+For the smoothest experience, allow these permissions in Claude Code settings:
+- `npm`, `npx`, `vercel` commands
+- Writing files to `~/Projects/`
+
+See [CLAUDE.md](CLAUDE.md) for the full list of recommended permissions.
 
 ## How It Works
 
@@ -49,15 +94,32 @@ Understand → Design → Review → Build → Test → Audit → Deploy → Ver
 
 Each phase runs independently with its own error recovery. If something goes wrong, Shipwright fixes it automatically (up to 5 attempts) and learns from mistakes.
 
-## Requirements
+## Technology Stacks
 
-- [Claude Code](https://claude.ai/code) with an active subscription
-- [Node.js](https://nodejs.org) (v18+)
-- [Git](https://git-scm.com)
-- [Vercel CLI](https://vercel.com/cli) (`npm i -g vercel`) + free Vercel account
-- [Supabase](https://supabase.com) account (free, only for apps that need a database)
+Shipwright auto-selects the best technology for your app:
 
-Shipwright checks for all of these before building and walks you through installing anything that's missing.
+| Stack | Best For | Key Features |
+|-------|----------|-------------|
+| **Next.js + Supabase** | SaaS, dashboards, user-facing apps | User accounts, database, realtime, file uploads |
+| **Next.js + Prisma** | Marketplaces, multi-tenant apps | Complex data relationships, advanced queries |
+| **SvelteKit** | Lightweight interactive apps | Blazing fast, minimal overhead |
+| **Astro** | Blogs, portfolios, docs sites | Fastest page loads, great SEO |
+
+All stacks deploy to Vercel with zero configuration.
+
+## Limitations
+
+All Shipwright apps run on Vercel's serverless platform. This is great for most web apps, but there are some things to be aware of:
+
+- **No persistent WebSocket connections** — use Supabase Realtime or polling instead
+- **No background jobs over 5 minutes** — use Vercel Cron Jobs for scheduled tasks
+- **No server-side file storage** — use Supabase Storage or Vercel Blob for uploads
+- **250MB deployment size limit** — sufficient for most apps
+- **No GPU/ML inference** — use external APIs (Replicate, Modal) for AI models
+
+If your idea needs any of these capabilities, Shipwright will work around the limitations or let you know upfront.
+
+Alternative deploy targets (Railway, Fly.io, etc.) are on the roadmap for future versions.
 
 ## Built by Product Agent
 

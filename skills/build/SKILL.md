@@ -252,7 +252,7 @@ After the build completes (success or failure), register it in the project regis
    ```
 3. Fill in values from the build result:
    - `project_id`: directory name (e.g., "todo-app")
-   - `project_dir`: full path (e.g., "/Users/nate/Projects/todo-app")
+   - `project_dir`: full path (e.g., "~/Projects/todo-app")
    - `idea`: the user's original description ($ARGUMENTS)
    - `stack`: one of `nextjs-supabase`, `nextjs-prisma`, `sveltekit`, `astro`
    - `deployment_url`: the Vercel URL if deployed, empty string if not

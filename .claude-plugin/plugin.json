@@ -3,10 +3,8 @@
   "version": "2.3.0",
   "description": "Describe your app in plain English. Shipwright builds, tests, and deploys it.",
   "author": {
-    "name": "Nate Nelson",
-    "url": "https://github.com/Wynelson94"
+    "name": "Shipwright Contributors"
   },
-  "repository": "https://github.com/Wynelson94/shipwright",
   "license": "MIT",
   "keywords": ["ai", "builder", "autonomous", "deploy", "no-code", "vercel"]
 }

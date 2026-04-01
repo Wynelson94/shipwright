@@ -44,17 +44,19 @@ That's it. Shipwright will:
 
 ### Requirements
 
-- [Claude Code](https://claude.ai/code) with an active subscription
+- [Claude Code](https://claude.ai/code) with an active Pro or Max subscription
 - [Node.js](https://nodejs.org) v20+ (v24 LTS recommended)
 - [Git](https://git-scm.com)
 - [Python 3.10+](https://python.org) (required for safety hooks and build engine)
 - [Vercel CLI](https://vercel.com/cli) (`npm i -g vercel`) + free Vercel account
-- [Supabase](https://supabase.com) account (free, only for apps that need a database)
+- [Supabase](https://supabase.com) account (free, only needed for apps with a database)
 - **Platform**: macOS or Linux (Windows is not currently supported)
+
+> **No API key needed.** Shipwright runs entirely through your Claude Code subscription. You do not need an Anthropic API key or any paid API credentials.
 
 ### Build Engine (Product Agent)
 
-Shipwright uses [Product Agent](https://github.com/Wynelson94/product-agent) as its build engine. To install it automatically:
+Shipwright uses Product Agent as its build engine. To install it automatically:
 
 ```bash
 bash setup.sh
@@ -64,13 +66,6 @@ Or install manually:
 
 ```bash
 pip install product-agent
-```
-
-If the package isn't on PyPI yet, install from source:
-
-```bash
-git clone https://github.com/Wynelson94/product-agent.git ~/Projects/product-agent
-pip install -e ~/Projects/product-agent
 ```
 
 Minimum required version: **v12.0**
@@ -144,7 +139,7 @@ Alternative deploy targets (Railway, Fly.io, etc.) are on the roadmap for future
 
 ## Built by Product Agent
 
-Shipwright is powered by [Product Agent](https://github.com/Wynelson94/product-agent) v12.4 — an autonomous build pipeline with 1,544+ unit tests, 8 technology stacks, and battle-tested error recovery.
+Shipwright is powered by Product Agent v12.4 — an autonomous build pipeline with 1,544+ unit tests, 8 technology stacks, and battle-tested error recovery.
 
 ## Version History
 

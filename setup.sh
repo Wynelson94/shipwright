@@ -5,7 +5,6 @@
 set -e
 
 MIN_VERSION=12
-REPO="Wynelson94/product-agent"
 LOCAL_SOURCE="$HOME/Projects/product-agent"
 
 # Colors (if terminal supports them)
@@ -55,24 +54,22 @@ fi
 
 info "Installing product-agent build engine..."
 
-# Try 1: PyPI
+# Try 1: PyPI (preferred — clean install)
 if $PIP install product-agent 2>/dev/null; then
     info "Installed from PyPI."
-elif $PIP install "git+https://github.com/${REPO}.git" 2>/dev/null; then
-    # Try 2: GitHub repo directly
-    info "Installed from GitHub."
 elif [ -d "$LOCAL_SOURCE" ] && $PIP install -e "$LOCAL_SOURCE" 2>/dev/null; then
-    # Try 3: Local development source
+    # Try 2: Local development source (for contributors)
     info "Installed from local source ($LOCAL_SOURCE)."
 else
     # All methods failed
     error "Could not install product-agent automatically."
     echo ""
-    echo "  Please install it manually using one of these methods:"
+    echo "  Please install it manually:"
     echo ""
     echo "    pip install product-agent"
-    echo "    pip install git+https://github.com/${REPO}.git"
-    echo "    git clone https://github.com/${REPO}.git ~/Projects/product-agent && pip install -e ~/Projects/product-agent"
+    echo ""
+    echo "  If the package is not yet on PyPI, ask for the install link or"
+    echo "  clone the source repository and run: pip install -e /path/to/product-agent"
     echo ""
     exit 1
 fi

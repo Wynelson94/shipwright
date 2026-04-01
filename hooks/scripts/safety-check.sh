@@ -33,11 +33,9 @@ if [ "$TOOL_NAME" = "Bash" ]; then
         COMMAND=$(echo "$INPUT" | grep -o '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:.*"\([^"]*\)"/\1/')
     fi
 
-    # Allow commands targeting Shipwright plugin data directory (build memory, audit logs)
-    if echo "$COMMAND" | grep -q '\.claude/plugins/data/shipwright\|\.shipwright'; then
-        exit 0
-    fi
-
+    # --- Step 1: Check for blocked patterns FIRST (before any allowlists) ---
+    # SECURITY: Blocked patterns must run before the data-path allowlist to prevent
+    # bypass via comment injection (e.g., "rm -rf / # .shipwright").
     if [ "$PYTHON3_AVAILABLE" = true ]; then
         # Full python3 pattern matching — comprehensive detection
         BLOCKED=$(echo "$COMMAND" | python3 -c "
@@ -60,6 +58,7 @@ patterns = [
     r'wget\s+.*\|\s*sh\b',
     r'eval\s+\\\$\(',
     r'base64\s+-d\s*\|',
+    r':\(\)\{.*:\|:.*\};:',
 ]
 for p in patterns:
     if re.search(p, cmd, re.IGNORECASE):
@@ -82,6 +81,12 @@ print('OK')
                 BLOCKED="BLOCKED" ;;
             *"dd if=/dev/zero"*|*"dd if=/dev/random"*)
                 BLOCKED="BLOCKED" ;;
+            *"chmod -R 777 /"*|*"chmod -R 777 ~"*)
+                BLOCKED="BLOCKED" ;;
+            *"eval \$("*|*'eval $('*)
+                BLOCKED="BLOCKED" ;;
+            *"base64 -d"*"|"*|*"base64 -d |"*)
+                BLOCKED="BLOCKED" ;;
             *"curl"*"|"*"bash"*|*"curl"*"|"*" sh"*)
                 BLOCKED="BLOCKED" ;;
             *"wget"*"|"*"bash"*|*"wget"*"|"*" sh"*)
@@ -97,6 +102,13 @@ print('OK')
     if [ "$BLOCKED" = "BLOCKED" ]; then
         echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"BLOCKED by Shipwright: Dangerous command detected"}}'
         exit 2
+    fi
+
+    # --- Step 2: Allow commands targeting Shipwright plugin data directory ---
+    # AFTER blocked patterns pass, allow writes to build memory and audit logs.
+    # This order ensures dangerous commands can't bypass checks via path substring.
+    if echo "$COMMAND" | grep -q '\.claude/plugins/data/shipwright\|\.shipwright'; then
+        exit 0
     fi
 fi
 
@@ -120,7 +132,7 @@ if [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "Edit" ]; then
     done
 
     # Block credential files (works with or without python3)
-    PROTECTED_COMPONENTS=(".ssh" ".aws" ".gnupg" ".kube" "id_rsa" "id_ed25519" ".pem")
+    PROTECTED_COMPONENTS=(".ssh" ".aws" ".gnupg" ".kube" "id_rsa" "id_ed25519" ".pem" ".p12" ".pfx" ".key" ".keystore" ".jks")
     for component in "${PROTECTED_COMPONENTS[@]}"; do
         if echo "$FILE_PATH" | grep -q "$component"; then
             echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"BLOCKED by Shipwright: Cannot modify credential files"}}'

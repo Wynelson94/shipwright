@@ -21,6 +21,12 @@ mkdir -p "$DATA_DIR"
 
 LOG_FILE="$DATA_DIR/builds.jsonl"
 
+# Set restrictive permissions on the log file — it contains deployment URLs
+# and project paths that shouldn't be world-readable in shared environments.
+if [ -f "$LOG_FILE" ]; then
+    chmod 600 "$LOG_FILE" 2>/dev/null || true
+fi
+
 if [ "$PYTHON3_AVAILABLE" = true ]; then
     # Full python3 logging — rich data extraction
     python3 -c "

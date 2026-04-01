@@ -50,6 +50,7 @@ That's it. Shipwright will:
 - [Python 3.10+](https://python.org) (required for safety hooks and build engine)
 - [Vercel CLI](https://vercel.com/cli) (`npm i -g vercel`) + free Vercel account
 - [Supabase](https://supabase.com) account (free, only for apps that need a database)
+- **Platform**: macOS or Linux (Windows is not currently supported)
 
 ### Build Engine (Product Agent)
 
@@ -92,7 +93,7 @@ Shipwright runs a 9-phase autonomous pipeline:
 Understand → Design → Review → Build → Test → Audit → Deploy → Verify → Done!
 ```
 
-Each phase runs independently with its own error recovery. If something goes wrong, Shipwright fixes it automatically (up to 5 attempts) and learns from mistakes.
+Each phase runs independently with its own error recovery. If something goes wrong, Shipwright fixes it automatically (up to 5 attempts with backoff) and learns from mistakes.
 
 ## Technology Stacks
 
@@ -106,6 +107,26 @@ Shipwright auto-selects the best technology for your app:
 | **Astro** | Blogs, portfolios, docs sites | Fastest page loads, great SEO |
 
 All stacks deploy to Vercel with zero configuration.
+
+## Safety & Security
+
+Shipwright includes enterprise-grade safety features:
+
+- **Input sanitization** — Detects and strips 11 prompt injection patterns, zero-width unicode, HTML entities, and encoded attacks
+- **Command blocking** — Blocks destructive commands (`rm -rf /`, fork bombs, piped downloads, `sudo`, device writes) with shell-aware splitting
+- **Path protection** — Prevents writes to system directories (`/etc`, `/usr`, `/System`) and credential files (`.ssh`, `.aws`, `.pem`, `.key`, `.p12`)
+- **Audit logging** — Records all build activity with restrictive file permissions
+- **Build memory** — Learns from past builds with automatic log rotation (max 500 records)
+
+All safety hooks run as bash scripts with python3 for comprehensive pattern matching, and fail-closed when python3 is unavailable.
+
+### Running the Hook Tests
+
+```bash
+bash tests/test_hooks.sh
+```
+
+41 tests covering bypass attempts, destructive commands, protected paths, and injection patterns.
 
 ## Limitations
 
@@ -123,7 +144,17 @@ Alternative deploy targets (Railway, Fly.io, etc.) are on the roadmap for future
 
 ## Built by Product Agent
 
-Shipwright is powered by [Product Agent](https://github.com/Wynelson94/product-agent) v12.0 — an autonomous build pipeline with 1,627+ tests, 8 technology stacks, and battle-tested error recovery.
+Shipwright is powered by [Product Agent](https://github.com/Wynelson94/product-agent) v12.4 — an autonomous build pipeline with 1,544+ unit tests, 8 technology stacks, and battle-tested error recovery.
+
+## Version History
+
+| Version | Highlights |
+|---------|-----------|
+| **v2.3.0** | Enterprise security audit: hook bypass fix, review validation hardening, encoded attack detection, retry backoff, JSONL rotation, 41-test hook harness |
+| **v2.2.0** | Safety hardening, version pinning, project registry, docs overhaul |
+| **v2.1.0** | Background execution + polling, public release prep |
+| **v2.0.0** | Rewrite to use Product Agent CLI |
+| **v1.0.0** | Initial plugin with autonomous 9-phase pipeline |
 
 ## License
 

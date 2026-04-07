@@ -52,6 +52,22 @@ Read `DESIGN.md` and key source files to understand the current app. Then confir
 
 Wait for confirmation.
 
+## Step 2.5: Check Product Agent Version
+
+Before running the enhancement pipeline, verify Product Agent supports enhancement mode:
+
+```bash
+product-agent --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+```
+
+The enhancement flags (`--enhance-features`, `--design-file`) require **Product Agent 12.4.0 or newer**.
+
+- If the version is **12.4.0+**: proceed to Step 3.
+- If the version is **older than 12.4.0**: tell the user:
+  > "Your build engine needs an update to support feature enhancements. Run `pip install --upgrade product-agent` (or `pip install -e ~/Projects/product-agent/` if installing from source), then try again."
+  Stop here — do NOT silently fall back to manual mode when the CLI exists but is outdated. That hides a fixable problem.
+- If `product-agent` is **not installed at all**: fall back to manual enhancement mode (Step 3 fallback section below).
+
 ## Step 3: Run Product Agent Enhancement Mode
 
 **IMPORTANT: Background execution required.** Enhancements can take 10-30 minutes. Run in the background and poll for progress.

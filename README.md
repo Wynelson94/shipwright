@@ -24,12 +24,15 @@ That's it. Shipwright will:
 
 ## What Can It Build?
 
+<!-- Stack info sourced from stacks/stacks-reference.md — update there first -->
 | You Describe | Shipwright Builds |
 |-------------|------------------|
-| "A project management tool" | Full web app with accounts, dashboards, data |
-| "A marketplace for freelancers" | Complex app with buyers, sellers, payments |
-| "A company blog" | Fast content site with great SEO |
-| "A simple dashboard" | Lightweight interactive web app |
+| "A project management tool" | Full web app (Next.js + Supabase) |
+| "A marketplace for freelancers" | Complex app (Next.js + Prisma) |
+| "A company blog" | Content site (Astro) |
+| "A simple dashboard" | Lightweight app (SvelteKit) |
+
+Run `/shipwright:stacks` for full details on each stack.
 
 ## Commands
 
